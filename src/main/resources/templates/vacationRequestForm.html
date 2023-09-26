@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>휴가 신청 폼</title>
+</head>
+<body>
+<h2>휴가 신청 폼</h2>
+
+<!-- 휴가 신청 폼 -->
+<form action="/submit" method="post">
+
+
+  <label for="department">부서:</label>
+  <select id="department" name="department.id" required>
+    <option value="">부서 선택</option>
+    <!-- 여기에 부서 목록을 동적으로 로드하는 방법을 추가할 수 있습니다. -->
+  </select><br><br>
+
+  <label for="employee">사원:</label>
+  <select id="employee" name="employee.id" required>
+    <option value="">사원 선택</option>
+    <!-- 여기에 사원 목록을 동적으로 로드하는 방법을 추가할 수 있습니다. -->
+  </select><br><br>
+
+  <label for="vacationType">휴가 종류:</label>
+  <select id="vacationType" name="vacationType" required>
+    <option value="">휴가 종류 선택</option>
+    <option value="법정 휴가">법정 휴가</option>
+    <option value="약정 휴가">약정 휴가</option>
+  </select><br><br>
+
+  <!-- 하위 휴가 종류 선택 (동적으로 업데이트됨) -->
+  <label for="subVacationType">하위 휴가 종류:</label>
+  <select id="subVacationType" name="subVacationType" required disabled>
+    <option value="">하위 휴가 종류 선택</option>
+  </select><br><br>
+
+  <label for="vacationReason">휴가 사유:</label>
+  <textarea id="vacationReason" name="vacationReason" rows="4" cols="50" required></textarea><br><br>
+
+  <!-- 휴가 신청일을 자동으로 설정합니다. -->
+  <input type="hidden" id="requestDatetime" name="requestDatetime">
+
+  <label for="vacationHopeDate">휴가 희망일:</label>
+  <input type="date" id="vacationHopeDate" name="vacationHopeDate" required><br><br>
+
+  <label for="vacationPeriod">휴가 기간:</label>
+  <input type="text" id="vacationPeriod" name="vacationPeriod" required><br><br>
+
+  <button type="submit">신청</button>
+</form>
+
+<script>
+  // 직원 목록 가져오기
+  function fetchEmployeesByDepartment() {
+    const selectedDepartmentId = document.getElementById('department').value;
+    fetch(`/employees/byDepartment/${selectedDepartmentId}`)
+            .then(response => response.json())
+            .then(data => {
+              const employeeSelect = document.getElementById('employee');
+              // 기존 옵션을 모두 제거
+              employeeSelect.innerHTML = '';
+              // 사원 목록 추가
+              data.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee.id;
+                option.text = employee.employeeName;
+                employeeSelect.appendChild(option);
+              });
+            })
+            .catch(error => console.error('Error fetching employees:', error));
+  }
+
+  // 페이지 로드 시 부서 목록 가져오기
+  fetch('/departments/all')
+          .then(response => response.json())
+          .then(data => {
+            const departmentSelect = document.getElementById('department');
+            data.forEach(department => {
+              const option = document.createElement('option');
+              option.value = department.id;
+              option.text = department.departmentName;
+              departmentSelect.appendChild(option);
+            });
+          })
+          .catch(error => console.error('Error fetching departments:', error));
+
+  // 부서 선택 값이 변경될 때 사원 목록 가져오기
+  document.getElementById('department').addEventListener('change', fetchEmployeesByDepartment);
+
+  // 휴가 종류 선택 값이 변경될 때 하위 휴가 종류를 업데이트
+  document.getElementById('vacationType').addEventListener('change', function() {
+    const selectedVacationType = document.getElementById('vacationType').value;
+    const subVacationTypeSelect = document.getElementById('subVacationType');
+
+    // 하위 휴가 종류 목록 업데이트
+    if (selectedVacationType === '법정 휴가') {
+      // 법정 휴가에 해당하는 하위 휴가 종류 목록 업데이트
+      subVacationTypeSelect.innerHTML = `
+      <option value="연차 휴가(유급)">연차 휴가(유급)</option>
+      <option value="반차 휴가(유급)">반차 휴가(유급)</option>
+      <option value="출산 휴가(유급)">출산 휴가(유급)</option>
+      <option value="배우자 출산 휴가(유급)">배우자 출산 휴가(유급)</option>
+      <option value="생리휴가(무급)">생리휴가(무급)</option>
+      <option value="가족돌봄휴가(무급)">가족돌봄휴가(무급)</option>
+    `;
+    } else if (selectedVacationType === '약정 휴가') {
+      // 약정 휴가에 해당하는 하위 휴가 종류 목록 업데이트
+      subVacationTypeSelect.innerHTML = `
+      <option value="경조사 휴가(무급)">경조사 휴가(무급)</option>
+      <option value="예비군 및 민방위(유급)">예비군 및 민방위(유급)</option>
+      <option value="병가(무급)">병가(무급)</option>
+      <option value="하계 휴가(무급)">하계 휴가(무급)</option>
+      <option value="동계 휴가(무급)">동계 휴가(무급)</option>
+      <option value="백신 휴가(무급)">백신 휴가(무급)</option>
+      <option value="리프레시 휴가(무급)">리프레시 휴가(무급)</option>
+    `;
+    } else {
+      // 선택한 휴가 종류에 따라 하위 휴가 종류를 업데이트
+      subVacationTypeSelect.innerHTML = '<option value="">하위 휴가 종류 선택</option>';
+    }
+
+    // 하위 휴가 종류 선택을 활성화
+    subVacationTypeSelect.disabled = false;
+  });
+</script>
+
+<!-- 휴가 신청 목록을 동적으로 로드하는 부분 -->
+<h2>휴가 신청 목록</h2>
+<table>
+  <thead>
+  <tr>
+    <th>부서</th>
+    <th>신청자</th>
+    <th>휴가 종류</th>
+    <th>하위 휴가 종류</th>
+    <th>휴가 사유</th>
+    <th>신청일</th>
+    <th>휴가 희망일</th>
+    <th>휴가 기간</th>
+  </tr>
+  </thead>
+  <tbody id="vacationRequestTable">
+  <!-- 여기에 휴가 신청 목록을 동적으로 로드하는 방법을 추가할 수 있습니다. -->
+  <!-- 예를 들어 JavaScript로 데이터를 가져와서 아래와 같이 표시할 수 있습니다. -->
+  </tbody>
+</table>
+
+<!-- 휴가 신청 목록을 동적으로 로드하는 JavaScript -->
+<script>
+  function formatDateTime(dateTimeString) {
+    const dateTime = new Date(dateTimeString);
+    const year = dateTime.getFullYear();
+    const month = String(dateTime.getMonth() + 1).padStart(2, '0');
+    const day = String(dateTime.getDate()).padStart(2, '0');
+    const hours = String(dateTime.getHours()).padStart(2, '0');
+    const minutes = String(dateTime.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedDate = `${year}-${month}-${day}, ${hours}:${minutes} ${ampm}`;
+    return formattedDate;
+  }
+  // 휴가 신청 목록 가져오기
+  fetch('/vacation-requests/all')
+          .then(response => response.json())
+          .then(data => {
+            const vacationRequestTable = document.getElementById('vacationRequestTable');
+            data.forEach(request => {
+              const row = vacationRequestTable.insertRow();
+
+              const departmentCell = row.insertCell(0);
+              const employeeCell = row.insertCell(1);
+              const vacationTypeCell = row.insertCell(2);
+              const vacationSubTypeCell = row.insertCell(3);
+              const vacationReasonCell = row.insertCell(4);
+              const requestDatetimeCell = row.insertCell(5);
+              const vacationHopeDateCell = row.insertCell(6);
+              const vacationPeriodCell = row.insertCell(7);
+
+              departmentCell.textContent = request.department ? request.department.departmentName : 'N/A';
+              employeeCell.textContent = request.employee ? request.employee.employeeName : 'N/A';
+              vacationTypeCell.textContent = request.vacationType ? request.vacationType : 'N/A';
+              vacationSubTypeCell.textContent = request.subVacationType ? request.subVacationType : 'N/A';
+              vacationReasonCell.textContent = request.vacationReason ? request.vacationReason : 'N/A';
+              requestDatetimeCell.textContent = request.requestDatetime ? formatDateTime(request.requestDatetime) : 'N/A';
+              vacationHopeDateCell.textContent = request.vacationHopeDate ? request.vacationHopeDate : 'N/A';
+              vacationPeriodCell.textContent = request.vacationPeriod ? request.vacationPeriod : 'N/A';
+            });
+          })
+</script>
+</body>
+</html>
