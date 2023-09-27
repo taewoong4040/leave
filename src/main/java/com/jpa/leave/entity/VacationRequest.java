@@ -48,5 +48,8 @@ public class VacationRequest {
     @Column(name = "vacation_period") // 휴가 기간 컬럼 추가
     private String vacationPeriod;
 
+    @Column(name = "detailed_info")
+    private String detailedInfo; // 세부사항 필드 추가
+
     // 생성자, getter 및 setter 메서드 생략
 }
